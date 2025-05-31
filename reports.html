@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <script>
+        // اگر کاربر لاگین نکرده بود، به صفحه login.html منتقل می‌شود
+        if (localStorage.getItem('isLoggedIn') !== 'true') {
+            window.location.href = 'login.html';
+        }
+    </script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>گزارشات - سامانه مدیریت دانشگاه</title>
+    <link rel="icon" type="image/png" href="https://img.icons8.com/color/48/000000/report-card.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios@1.7.2/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <style>
+        body { font-family: 'Vazirmatn', sans-serif; }
+        .header { background: linear-gradient(to right, #1e40af, #3b82f6); box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
+        .footer { background: linear-gradient(to right, #1e3a8a, #3b82f6); color: white; text-align: center; padding: 1.5rem; font-size: 1.2rem; font-weight: 500; box-shadow: 0 -4px 6px rgba(0, 0, 0, 0.1); transition: transform 0.3s ease; }
+        .footer:hover { transform: translateY(-2px); }
+        .nav-link { position: relative; transition: color 0.3s ease; }
+        .nav-link::after { content: ''; position: absolute; width: 0; height: 2px; bottom: -2px; right: 0; background-color: white; transition: width 0.3s ease; }
+        .nav-link:hover::after { width: 100%; }
+        .report-container { background: white; border-radius: 1rem; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); padding: 2rem; animation: fadeIn 0.5s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .filter-section { background: #f8fafc; border-radius: 0.75rem; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); }
+        .table-container { overflow-x: auto; margin-top: 1.5rem; }
+        .report-table { width: 100%; border-collapse: collapse; }
+        .report-table th, .report-table td { border: 1px solid #e2e8f0; padding: 0.75rem; text-align: center; }
+        .report-table th { background-color: #1e40af; color: white; font-weight: 500; }
+        .action-btn { padding: 0.375rem 0.75rem; border-radius: 0.375rem; font-size: 0.875rem; margin: 0 0.25rem; transition: all 0.2s ease; }
+        .edit-btn { background: #f59e0b; color: white; }
+        .edit-btn:hover { background: #d97706; }
+        .delete-btn { background: #ef4444; color: white; }
+        .delete-btn:hover { background: #dc2626; }
+        .chart-btn { background: #8b5cf6; color: white; }
+        .chart-btn:hover { background: #7c3aed; }
+        .text-center { text-align: center; }
+        .logout-btn { background: #ef4444; color: white; padding: 0.5rem 1rem; border-radius: 0.5rem; font-weight: 500; transition: all 0.3s ease; }
+        .logout-btn:hover { background: #dc2626; }
+        #majorFilter {
+            pointer-events: auto;
+            z-index: 1000;
+            opacity: 1;
+            visibility: visible;
+            cursor: pointer;
+        }
+
+        #majorFilter option {
+            pointer-events: auto;
+            cursor: pointer;
+        }
+        .chart-container { background: white; border-radius: 0.75rem; padding: 1.5rem; margin-top: 1.5rem; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); }
+        .toast-close { color: white; font-weight: bold; font-size: 16px; margin-right: 10px; cursor: pointer; }
+        .custom-toast { border-radius: 8px; padding: 12px 20px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); font-family: 'Vazirmatn', sans-serif; display: flex; align-items: center; justify-content: space-between; }
+        .toast-success { background: linear-gradient(to right, #10b981, #34d399); }
+        .toast-error { background: linear-gradient(to right, #ef4444, #f87171); }
+        .toast-warning { background: linear-gradient(to right, #f59e0b, #fbbf24); }
+        @media (max-width: 768px) { 
+            .report-container { padding: 1.5rem; } 
+            .filter-section .grid { grid-template-columns: 1fr 1fr; }
+        }
+        @media (max-width: 640px) { 
+            .report-container { padding: 1rem; } 
+            .filter-section .grid { grid-template-columns: 1fr; }
+            .report-table th, .report-table td { padding: 0.5rem; font-size: 0.875rem; }
+            .action-btn { padding: 0.25rem 0.5rem; margin: 0.125rem; }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-b from-gray-50 to-gray-200 min-h-screen flex flex-col">
+    <header class="header text-white">
+        <nav class="container mx-auto px-4 py-4">
+            <div class="flex justify-between items-center">
+                <h1 class="text-2xl font-bold text-white flex items-center">
+                    <img src="https://img.icons8.com/color/48/000000/university.png" alt="لوگو" class="w-8 h-8 ml-2">
+                    سامانه مدیریت دانشگاه
+                </h1>
+                <button id="logout-btn" class="logout-btn">
+                    خروج
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                </button>
+            </div>
+            <br>
+            <ul class="flex space-x-6 space-x-reverse">
+                <li><a href="index.html" class="nav-link hover:text-blue-200">صفحه اصلی</a></li>
+                <li><a href="students.html" class="nav-link hover:text-blue-200">دانشجویان</a></li>
+                <li><a href="teachers.html" class="nav-link hover:text-blue-200">اساتید</a></li>
+                <li><a href="courses.html" class="nav-link hover:text-blue-200">دروس</a></li>
+                <li><a href="reports.html" class="nav-link hover:text-blue-200 font-bold">گزارشات</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="container mx-auto px-4 py-8 flex-grow">
+        <h2 class="text-2xl font-bold text-center mb-6 text-#1e40af">گزارشات مدیریتی</h2>
+        
+        <div class="report-container">
+            <!-- فیلتر و جستجو -->
+            <div class="filter-section">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div>
+                        <label for="entitySelect" class="block text-sm font-medium text-gray-700 mb-1">نوع گزارش</label>
+                        <select id="entitySelect" class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" onchange="updateTable()">
+                            <option value="students">دانشجویان</option>
+                            <option value="teachers">اساتید</option>
+                            <option value="courses">دروس</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="departmentFilter" class="block text-sm font-medium text-gray-700 mb-1">دانشکده</label>
+                        <select id="departmentFilter" class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" onchange="updateTable()">
+                            <option value="">همه دانشکده‌ها</option>
+                            <option value="فنی مهندسی">فنی مهندسی</option>
+                            <option value="علوم پایه">علوم پایه</option>
+                            <option value="اقتصاد">اقتصاد</option>
+                        </select>
+                    </div>
+                    <div id="majorFilterContainer" style="display: none;">
+                        <label for="majorFilter" class="block text-sm font-medium text-gray-700 mb-1">رشته</label>
+                        <select id="majorFilter" class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" onchange="updateTable()">
+                            <option value="">همه رشته‌ها</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="searchInput" class="block text-sm font-medium text-gray-700 mb-1">جستجو</label>
+                        <input type="text" id="searchInput" class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="نام یا کد..." oninput="updateTable()">
+                    </div>
+                </div>
+            </div>
+
+            <!-- جداول -->
+            <div class="table-container">
+                <div id="studentsTable">
+                    <table class="report-table">
+                        <thead>
+                            <tr>
+                                <th>شماره دانشجویی</th>
+                                <th>نام</th>
+                                <th>نام خانوادگی</th>
+                                <th>دانشکده</th>
+                                <th>رشته</th>
+                                <th>کدملی</th>
+                                <th>عملیات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="studentsTableBody"></tbody>
+                    </table>
+                </div>
+                <div id="teachersTable" style="display: none;">
+                    <table class="report-table">
+                        <thead>
+                            <tr>
+                                <th>شماره استاد</th>
+                                <th>نام</th>
+                                <th>نام خانوادگی</th>
+                                <th>دانشکده</th>
+                                <th>کدملی</th>
+                                <th>عملیات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="teachersTableBody"></tbody>
+                    </table>
+                </div>
+                <div id="coursesTable" style="display: none;">
+                    <table class="report-table">
+                        <thead>
+                            <tr>
+                                <th>کد درس</th>
+                                <th>نام درس</th>
+                                <th>تعداد واحد</th>
+                                <th>دانشکده</th>
+                                <th>استاد</th>
+                                <th>عملیات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="coursesTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- نمودارها -->
+            <div class="chart-container">
+                <h3 class="text-xl font-semibold mb-4 text-gray-800">آمار و نمودارها</h3>
+                <div class="flex flex-col md:flex-row gap-4 mb-4">
+                    <select id="chartType" class="w-full md:w-64 p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" onchange="updateChart()">
+                        <option value="">انتخاب نوع نمودار</option>
+                        <option value="studentsByDepartment">تعداد دانشجویان در هر دانشکده</option>
+                        <option value="coursesByTeacher">تعداد دروس هر استاد</option>
+                    </select>
+                    <button class="chart-btn action-btn" onclick="downloadChart()">
+                        دانلود نمودار
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                    </button>
+                </div>
+                <div class="relative h-80">
+                    <canvas id="statsChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- مودال‌ها -->
+    <!-- مودال ویرایش دانشجو -->
+    <div class="modal fade fixed inset-0 z-50 overflow-y-auto hidden" id="editStudentModal" tabindex="-1" aria-hidden="true">
+        <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 transition-opacity" aria-hidden="true">
+                <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
+            </div>
+            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div class="mt-3 text-center sm:mt-0 sm:text-right w-full">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">ویرایش اطلاعات دانشجو</h3>
+                            <form id="editStudentForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <input type="hidden" id="editStudentSTID">
+                                <div>
+                                    <label for="editStudentFname" class="block text-sm font-medium text-gray-700">نام</label>
+                                    <input type="text" id="editStudentFname" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500" required>
+                                </div>
+                                <div>
+                                    <label for="editStudentLname" class="block text-sm font-medium text-gray-700">نام خانوادگی</label>
+                                    <input type="text" id="editStudentLname" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500" required>
+                                </div>
+                                <div>
+                                    <label for="editStudentFather" class="block text-sm font-medium text-gray-700">نام پدر</label>
+                                    <input type="text" id="editStudentFather" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500" required>
+                                </div>
+                                <div>
+                                    <label for="editStudentNationalId" class="block text-sm font-medium text-gray-700">کدملی</label>
+                                    <input type="text" id="editStudentNationalId" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500" required>
+                                </div>
+                                <div>
+                                    <label for="editStudentDepartment" class="block text-sm font-medium text-gray-700">دانشکده</label>
+                                    <select id="editStudentDepartment" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500" required>
+                                        <option value="فنی مهندسی">فنی مهندسی</option>
+                                        <option value="علوم پایه">علوم پایه</option>
+                                        <option value="اقتصاد">اقتصاد</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="editStudentMajor" class="block text-sm font-medium text-gray-700">رشته</label>
+                                    <select id="editStudentMajor" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500" required>
+                                        <option value="">ابتدا دانشکده را انتخاب کنید</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="editStudentBirthDate" class="block text-sm font-medium text-gray-700">تاریخ تولد</label>
+                                    <input type="text" id="editStudentBirthDate" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="YYYY/MM/DD" required>
+                                </div>
+                                <div>
+                                    <label for="editStudentMarried" class="block text-sm font-medium text-gray-700">وضعیت تأهل</label>
+                                    <select id="editStudentMarried" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500" required>
+                                        <option value="مجرد">مجرد</option>
+                                        <option value="متاهل">متاهل</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="editStudentAddress" class="block text-sm font-medium text-gray-700">آدرس</label>
+                                    <input type="text" id="editStudentAddress" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500" required>
+                                </div>
+                                <div>
+                                    <label for="editStudentPostalCode" class="block text-sm font-medium text-gray-700">کد پستی</label>
+                                    <input type="text" id="editStudentPostalCode" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500" required>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button type="button" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm" onclick="saveStudentChanges()">
+                        ذخیره تغییرات
+                    </button>
+                    <button type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm" onclick="document.getElementById('editStudentModal').classList.add('hidden')">
+                        انصراف
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- مودال ویرایش استاد -->
+    <div class="modal fade fixed inset-0 z-50 overflow-y-auto hidden" id="editTeacherModal" tabindex="-1" aria-hidden="true">
+        <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 transition-opacity" aria-hidden="true">
+                <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
+            </div>
+            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div class="mt-3 text-center sm:mt-0 sm:text-right w-full">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">ویرایش اطلاعات استاد</h3>
+                            <form id="editTeacherForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <input type="hidden" id="editTeacherId">
+                                <div>
+                                    <label for="editTeacherFname" class="block text-sm font-medium text-gray-700">نام</label>
+                                    <input type="text" id="editTeacherFname" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500" required>
+                                </div>
+                                <div>
+                                    <label for="editTeacherLname" class="block text-sm font-medium text-gray-700">نام خانوادگی</label>
+                                    <input type="text" id="editTeacherLname" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500" required>
+                                </div>
+                                <div>
+                                    <label for="editTeacherNationalId" class="block text-sm font-medium text-gray-700">کدملی</label>
+                                    <input type="text" id="editTeacherNationalId" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500" required>
+                                </div>
+                                <div>
+                                    <label for="editTeacherDepartment" class="block text-sm font-medium text-gray-700">دانشکده</label>
+                                    <select id="editTeacherDepartment" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500" required>
+                                        <option value="فنی مهندسی">فنی مهندسی</option>
+                                        <option value="علوم پایه">علوم پایه</option>
+                                        <option value="اقتصاد">اقتصاد</option>
+                                    </select>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button type="button" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm" onclick="saveTeacherChanges()">
+                        ذخیره تغییرات
+                    </button>
+                    <button type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm" onclick="document.getElementById('editTeacherModal').classList.add('hidden')">
+                        انصراف
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- مودال ویرایش درس -->
+    <div class="modal fade fixed inset-0 z-50 overflow-y-auto hidden" id="editCourseModal" tabindex="-1" aria-hidden="true">
+        <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 transition-opacity" aria-hidden="true">
+                <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
+            </div>
+            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-xl sm:w-full">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div class="mt-3 text-center sm:mt-0 sm:text-right w-full">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">ویرایش اطلاعات درس</h3>
+                            <form id="editCourseForm">
+                                <input type="hidden" id="editCourseId">
+                                <div class="grid grid-cols-1 gap-4">
+                                    <div>
+                                        <label for="editCourseName" class="block text-sm font-medium text-gray-700">نام درس</label>
+                                        <input type="text" id="editCourseName" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500" required>
+                                    </div>
+                                    <div>
+                                        <label for="editCourseUnits" class="block text-sm font-medium text-gray-700">تعداد واحد</label>
+                                        <input type="number" id="editCourseUnits" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500" min="1" max="4" required>
+                                    </div>
+                                    <div>
+                                        <label for="editCourseDepartment" class="block text-sm font-medium text-gray-700">دانشکده</label>
+                                        <select id="editCourseDepartment" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500" required>
+                                            <option value="فنی مهندسی">فنی مهندسی</option>
+                                            <option value="علوم پایه">علوم پایه</option>
+                                            <option value="اقتصاد">اقتصاد</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label for="editCourseTeacherId" class="block text-sm font-medium text-gray-700">استاد</label>
+                                        <select id="editCourseTeacherId" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500" required>
+                                            <option value="">انتخاب کنید</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button type="button" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm" onclick="saveCourseChanges()">
+                        ذخیره تغییرات
+                    </button>
+                    <button type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm" onclick="document.getElementById('editCourseModal').classList.add('hidden')">
+                        انصراف
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <p>ساخته شده با ❤️ توسط <span class="font-bold">حسین محمدی کیا</span></p>
+    </footer>
+
+    <script src="repo.js">
+        document.getElementById('logout-btn')?.addEventListener('click', function() {
+            localStorage.removeItem('isLoggedIn');
+            window.location.href = 'login.html';
+        });
+    </script>
+</body>
+</html>

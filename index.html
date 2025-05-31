@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>سامانه مدیریت دانشگاه</title>
+    <link rel="icon" type="image/png" href="https://img.icons8.com/color/48/000000/university.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Favicon Links -->
+    <link rel="icon" type="image/png" href="/favicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <style>
+        /* Apply Vazirmatn font */
+        body {
+            font-family: 'Vazirmatn', sans-serif;
+        }
+
+        /* Center the animation */
+        .animation-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-grow: 1;
+            padding: 2rem;
+        }
+
+        /* Responsive SVG sizing */
+        .infinity-svg {
+            width: 300px;
+            height: 150px;
+        }
+
+        @media (max-width: 640px) {
+            .infinity-svg {
+                width: 200px;
+                height: 100px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .infinity-svg {
+                width: 150px;
+                height: 75px;
+            }
+        }
+
+        /* Header styling */
+        .header {
+            background: linear-gradient(to right, #1e40af, #3b82f6);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Footer styling */
+        .footer {
+            background: linear-gradient(to right, #1e3a8a, #3b82f6);
+            color: white;
+            text-align: center;
+            padding: 1.5rem;
+            font-size: 1.2rem;
+            font-weight: 500;
+            box-shadow: 0 -4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .footer:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Navigation links */
+        .nav-link {
+            position: relative;
+            transition: color 0.3s ease;
+        }
+
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: -2px;
+            right: 0;
+            background-color: white;
+            transition: width 0.3s ease;
+        }
+
+        .nav-link:hover::after {
+            width: 100%;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-b from-gray-50 to-gray-200 min-h-screen flex flex-col">
+    <header class="header text-white">
+        <nav class="container mx-auto px-4 py-4">
+            <h1 class="text-2xl font-bold text-white flex items-center">
+            <img src="https://img.icons8.com/color/48/000000/university.png" alt="لوگو" class="w-8 h-8 ml-2">
+            سامانه مدیریت دانشگاه
+            </h1>
+            <br>
+            <ul class="flex space-x-6 space-x-reverse">
+                <li><a href="index.html" class="nav-link hover:text-blue-200">صفحه اصلی</a></li>
+                <li><a href="students.html" class="nav-link hover:text-blue-200">دانشجویان</a></li>
+                <li><a href="teachers.html" class="nav-link hover:text-blue-200">اساتید</a></li>
+                <li><a href="courses.html" class="nav-link hover:text-blue-200">دروس</a></li>
+                <li><a href="reports.html" class="nav-link hover:text-blue-200">گزارشات</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="container mx-auto px-4 py-8 flex-grow">
+        <h2 class="text-center text-3xl font-medium mb-8">به سامانه مدیریت دانشگاه خوش آمدید</h2>
+        <p class="text-center mb-8">از منوی بالا برای مدیریت دانشجویان، اساتید، دروس و گزارشات استفاده کنید.</p>
+
+        <!-- Animation Section -->
+        <div class="animation-container">
+            <svg 
+                class="infinity-svg"
+                width="300" 
+                height="150"
+                viewBox="0 0 100 50"
+                xmlns="http://www.w3.org/2000/svg"
+            >
+                <defs>
+                    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+                        <feGaussianBlur stdDeviation="3" result="blur" />
+                        <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                    </defs>
+
+                <!-- Infinity symbol path -->
+                <path
+                    id="infinity-path"
+                    d="M30,25 C20,10 10,25 10,25 C10,25 20,40 30,25 C40,10 60,10 70,25 C80,40 90,25 90,25 C90,25 80,10 70,25 C60,40 40,40 30,25 Z"
+                    fill="none"
+                    stroke="#1e40af"
+                    stroke-width="3"
+                    stroke-linecap="round"
+                />
+            </svg>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>ساخته شده با ❤️ توسط <span class="font-bold">حسین محمدی کیا</span></p>
+    </footer>
+
+    <script>
+        // Animation script
+        const svg = document.querySelector('.infinity-svg');
+        const path = svg.querySelector('#infinity-path');
+
+        if (path) {
+            const pathLength = path.getTotalLength();
+
+            // Create moving dot
+            const dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            dot.setAttribute("r", "4");
+            dot.setAttribute("fill", "#1EAEDB");
+            dot.setAttribute("class", "moving-light");
+            dot.setAttribute("filter", "url(#glow)");
+            svg.appendChild(dot);
+
+            // Animation logic
+            let distance = 0;
+            const speed = 1; // Reduced speed for slower animation
+
+            function animate() {
+                distance = (distance + speed) % pathLength;
+                const point = path.getPointAtLength(distance);
+                dot.setAttribute("cx", point.x.toString());
+                dot.setAttribute("cy", point.y.toString());
+                requestAnimationFrame(animate);
+            }
+
+            animate();
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ورود به سیستم - سامانه مدیریت دانشگاه</title>
+    <link rel="icon" type="image/png" href="https://img.icons8.com/color/48/000000/university.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <style>
+        body { font-family: 'Vazirmatn', sans-serif; }
+        .login-container {
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            max-width: 400px;
+            margin: 0 auto;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .input-group {
+            margin-bottom: 1.5rem;
+        }
+        .input-group label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            color: #1e40af;
+        }
+        .custom-input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            background-color: white;
+        }
+        .custom-input:focus {
+            outline: none;
+            border-color: #8B5CF6;
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
+        }
+        .submit-btn {
+            background: linear-gradient(to right, #8B5CF6, #9b87f5);
+            color: white;
+            padding: 0.75rem 2rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            width: 100%;
+        }
+        .submit-btn:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+        }
+        .error-message {
+            color: #dc2626;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+            display: none;
+        }
+        .toast-close {
+            color: white;
+            font-weight: bold;
+            font-size: 16px;
+            margin-right: 10px;
+            cursor: pointer;
+        }
+        .custom-toast {
+            border-radius: 8px;
+            padding: 12px 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            font-family: 'Vazirmatn', sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .toast-success {
+            background: linear-gradient(to right, #10b981, #34d399);
+        }
+        .toast-error {
+            background: linear-gradient(to right, #ef4444, #f87171);
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-b from-gray-50 to-gray-200 min-h-screen flex flex-col">
+    <header class="bg-gradient-to-r from-blue-800 to-blue-600 text-white">
+        <nav class="container mx-auto px-4 py-4">
+            <h1 class="text-2xl font-bold text-white flex items-center justify-center">
+                <img src="https://img.icons8.com/color/48/000000/university.png" alt="لوگو" class="w-8 h-8 ml-2">
+                سامانه مدیریت دانشگاه
+            </h1>
+        </nav>
+    </header>
+
+    <main class="container mx-auto px-4 py-8 flex-grow flex items-center justify-center">
+        <div class="login-container">
+            <h2 class="text-2xl font-bold text-center mb-6 text-blue-800">ورود به سیستم</h2>
+            <form id="login-form">
+                <div class="input-group">
+                    <label for="username">نام کاربری</label>
+                    <input type="text" id="username" name="username" class="custom-input" required>
+                    <p class="error-message" id="username_error"></p>
+                </div>
+                <div class="input-group">
+                    <label for="password">رمز عبور</label>
+                    <input type="password" id="password" name="password" class="custom-input" required>
+                    <p class="error-message" id="password_error"></p>
+                </div>
+                <button type="submit" class="submit-btn mt-4">ورود</button>
+            </form>
+        </div>
+    </main>
+
+    <footer class="bg-gradient-to-r from-blue-900 to-blue-600 text-white text-center py-4">
+        <p>ساخته شده با ❤️ توسط <span class="font-bold">حسین محمدی کیا</span></p>
+    </footer>
+
+    <script>
+        // تابع نمایش toast با تنظیمات پیشرفته
+        function showToast(message, type = 'success', duration = 5000) {
+            const toastClass = `custom-toast toast-${type}`;
+            const closeBtn = document.createElement('span');
+            closeBtn.className = 'toast-close';
+            closeBtn.innerHTML = '&times;';
+            closeBtn.onclick = (e) => {
+                e.stopPropagation();
+                toast.hideToast();
+            };
+            
+            const toast = Toastify({
+                text: message,
+                duration: duration,
+                close: false,
+                gravity: "top",
+                position: "right",
+                stopOnFocus: true,
+                className: toastClass,
+                onClick: function() {
+                    toast.hideToast();
+                },
+                avatar: type === 'success' ? 
+                    'https://img.icons8.com/fluency/48/000000/checked.png' : 
+                    'https://img.icons8.com/color/48/000000/error--v1.png',
+                escapeMarkup: false
+            });
+            
+            toast.showToast();
+            const toastElement = document.querySelector('.toastify.on');
+            if (toastElement) {
+                toastElement.insertBefore(closeBtn, toastElement.firstChild);
+            }
+            
+            return toast;
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const loginForm = document.getElementById('login-form');
+            
+            loginForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const username = document.getElementById('username').value;
+                const password = document.getElementById('password').value;
+                
+                // اعتبارسنجی ساده
+                if (!username || !password) {
+                    showToast('لطفاً نام کاربری و رمز عبور را وارد کنید', 'error');
+                    return;
+                }
+                
+                // اطلاعات ورود پیش فرض
+                const validUsername = 'admin';
+                const validPassword = 'admin';
+                
+                if (username === validUsername && password === validPassword) {
+                    showToast('ورود با موفقیت انجام شد', 'success');
+                    
+                    // ذخیره وضعیت لاگین در localStorage
+                    localStorage.setItem('isLoggedIn', 'true');
+                    
+                    // هدایت به صفحه گزارشات پس از 1 ثانیه
+                    setTimeout(() => {
+                        window.location.href = 'reports.html';
+                    }, 1000);
+                } else {
+                    showToast('نام کاربری یا رمز عبور اشتباه است', 'error');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

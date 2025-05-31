@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ثبت دانشجو - سامانه مدیریت دانشگاه</title>
+    <link rel="icon" type="image/png" href="https://img.icons8.com/color/48/000000/student-male.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <style>
+        body { font-family: 'Vazirmatn', sans-serif; }
+        .header { background: linear-gradient(to right, #1e40af, #3b82f6); box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
+        .footer { background: linear-gradient(to right, #1e3a8a, #3b82f6); color: white; text-align: center; padding: 1.5rem; font-size: 1.2rem; font-weight: 500; box-shadow: 0 -4px 6px rgba(0, 0, 0, 0.1); transition: transform 0.3s ease; }
+        .footer:hover { transform: translateY(-2px); }
+        .nav-link { position: relative; transition: color 0.3s ease; }
+        .nav-link::after { content: ''; position: absolute; width: 0; height: 2px; bottom: -2px; right: 0; background-color: white; transition: width 0.3s ease; }
+        .nav-link:hover::after { width: 100%; }
+        .form-container { background: white; border-radius: 1rem; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); padding: 2rem; animation: fadeIn 0.5s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .input-group { margin-bottom: 1.5rem; }
+        .input-group label { display: block; font-weight: 500; margin-bottom: 0.5rem; color: #1e40af; }
+        .custom-select-wrapper { position: relative; width: 100%; }
+        .custom-select, .custom-input { width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 0.5rem; background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#1e40af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>') no-repeat left 0.75rem center; padding-left: 2rem; cursor: pointer; background-color: white; }
+        .custom-select:focus, .custom-input:focus { outline: none; border-color: #8B5CF6; box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2); }
+        .custom-select-options { position: absolute; top: 100%; right: 0; width: 100%; max-height: 10rem; overflow-y: auto; border: 1px solid #d1d5db; border-radius: 0.5rem; background: white; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); z-index: 10; display: none; scrollbar-width: thin; scrollbar-color: #8B5CF6 #f1f5f9; }
+        .custom-select-options::-webkit-scrollbar { width: 6px; }
+        .custom-select-options::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 3px; }
+        .custom-select-options::-webkit-scrollbar-thumb { background: #8B5CF6; border-radius: 3px; }
+        .custom-select-option { padding: 0.5rem 0.75rem; cursor: pointer; }
+        .custom-select-option:hover { background-color: #f1f5f9; }
+        .ids-container, .date-container { display: flex; gap: 1rem; align-items: center; }
+        .ids-container .custom-select-wrapper, .date-container .custom-select-wrapper { flex: 1; }
+        .submit-btn { background: linear-gradient(to right, #8B5CF6, #9b87f5); color: white; padding: 0.75rem 2rem; border-radius: 0.5rem; font-weight: 500; transition: transform 0.3s ease, box-shadow 0.3s ease; }
+        .submit-btn:hover { transform: scale(1.05); box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3); }
+        .error-message { color: #dc2626; font-size: 0.875rem; margin-top: 0.25rem; display: none; }
+        .toast-close {
+            color: white;
+            font-weight: bold;
+            font-size: 16px;
+            margin-right: 10px;
+            cursor: pointer;
+        }
+        
+        /* استایل سفارشی برای toast */
+        .custom-toast {
+            border-radius: 8px;
+            padding: 12px 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            font-family: 'Vazirmatn', sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .toast-success {
+            background: linear-gradient(to right, #10b981, #34d399);
+        }
+        
+        .toast-error {
+            background: linear-gradient(to right, #ef4444, #f87171);
+        }
+        
+        .toast-warning {
+            background: linear-gradient(to right, #f59e0b, #fbbf24);
+        }
+        @media (max-width: 768px) { .form-container { padding: 1.5rem; } .grid-cols-2 { grid-template-columns: 1fr; } .ids-container, .date-container { flex-direction: column; gap: 0.75rem; } }
+        @media (max-width: 480px) { .form-container { padding: 1rem; } .custom-input, .custom-select { padding: 0.5rem; padding-left: 1.5rem; } .submit-btn { padding: 0.5rem 1.5rem; } }
+    </style>
+</head>
+<body class="bg-gradient-to-b from-gray-50 to-gray-200 min-h-screen flex flex-col">
+    <header class="header text-white">
+        <nav class="container mx-auto px-4 py-4">
+            <h1 class="text-2xl font-bold text-white flex items-center">
+            <img src="https://img.icons8.com/color/48/000000/university.png" alt="لوگو" class="w-8 h-8 ml-2">
+            سامانه مدیریت دانشگاه
+            </h1>
+            <br>
+            <ul class="flex space-x-6 space-x-reverse">
+                <li><a href="index.html" class="nav-link hover:text-blue-200">صفحه اصلی</a></li>
+                <li><a href="students.html" class="nav-link hover:text-blue-200">دانشجویان</a></li>
+                <li><a href="teachers.html" class="nav-link hover:text-blue-200">اساتید</a></li>
+                <li><a href="courses.html" class="nav-link hover:text-blue-200">دروس</a></li>
+                <li><a href="reports.html" class="nav-link hover:text-blue-200">گزارشات</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="container mx-auto px-4 py-8 flex-grow">
+        <h2 class="text-2xl font-bold text-center mb-6 text-#1e40af">ثبت دانشجو</h2>
+        <div class="form-container">
+            <form id="student-form" class="grid grid-cols-2 gap-6">
+                <div class="input-group">
+                    <label for="student_fname">نام</label>
+                    <input type="text" id="student_fname" name="student_fname" class="custom-input" required pattern="^[\u0600-\u06FF\s]+$">
+                </div>
+                <div class="input-group">
+                    <label for="student_lname">نام خانوادگی</label>
+                    <input type="text" id="student_lname" name="student_lname" class="custom-input" required pattern="^[\u0600-\u06FF\s]+$">
+                </div>
+                <div class="input-group">
+                    <label for="father">نام پدر</label>
+                    <input type="text" id="father" name="father" class="custom-input" required pattern="^[\u0600-\u06FF\s]+$">
+                </div>
+                <div class="input-group">
+                    <label>سریال شناسنامه</label>
+                    <div class="ids-container">
+                        <div class="custom-select-wrapper">
+                            <div class="custom-select" id="ids_letter_select">حرف</div>
+                            <div class="custom-select-options" id="ids_letter_options">
+                                <div class="custom-select-option" data-value="الف">الف</div>
+                                <div class="custom-select-option" data-value="ب">ب</div>
+                                <div class="custom-select-option" data-value="پ">پ</div>
+                                <div class="custom-select-option" data-value="ت">ت</div>
+                                <div class="custom-select-option" data-value="ث">ث</div>
+                                <div class="custom-select-option" data-value="ج">ج</div>
+                                <div class="custom-select-option" data-value="چ">چ</div>
+                                <div class="custom-select-option" data-value="ح">ح</div>
+                                <div class="custom-select-option" data-value="خ">خ</div>
+                                <div class="custom-select-option" data-value="د">د</div>
+                                <div class="custom-select-option" data-value="ذ">ذ</div>
+                                <div class="custom-select-option" data-value="ر">ر</div>
+                                <div class="custom-select-option" data-value="ز">ز</div>
+                                <div class="custom-select-option" data-value="ژ">ژ</div>
+                                <div class="custom-select-option" data-value="س">س</div>
+                                <div class="custom-select-option" data-value="ش">ش</div>
+                                <div class="custom-select-option" data-value="ص">ص</div>
+                                <div class="custom-select-option" data-value="ض">ض</div>
+                                <div class="custom-select-option" data-value="ط">ط</div>
+                                <div class="custom-select-option" data-value="ظ">ظ</div>
+                                <div class="custom-select-option" data-value="ع">ع</div>
+                                <div class="custom-select-option" data-value="غ">غ</div>
+                                <div class="custom-select-option" data-value="ف">ف</div>
+                                <div class="custom-select-option" data-value="ق">ق</div>
+                                <div class="custom-select-option" data-value="ک">ک</div>
+                                <div class="custom-select-option" data-value="گ">گ</div>
+                                <div class="custom-select-option" data-value="ل">ل</div>
+                                <div class="custom-select-option" data-value="م">م</div>
+                                <div class="custom-select-option" data-value="ن">ن</div>
+                                <div class="custom-select-option" data-value="و">و</div>
+                                <div class="custom-select-option" data-value="ه">ه</div>
+                                <div class="custom-select-option" data-value="ی">ی</div>
+                            </div>
+                            <input type="hidden" id="ids_letter" name="ids_letter" required>
+                        </div>
+                        <input type="text" id="ids_number" name="ids_number" class="custom-input" placeholder="شماره (۶ رقم)" required pattern="\d{6}">
+                        <input type="text" id="ids_code" name="ids_code" class="custom-input" placeholder="کد (۲ رقم)" required pattern="\d{2}">
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>شهر محل تولد</label>
+                    <div class="custom-select-wrapper">
+                        <div class="custom-select" id="BornCity_select">انتخاب کنید</div>
+                        <div class="custom-select-options" id="BornCity_options">
+                            <div class="custom-select-option" data-value="تهران">تهران</div>
+                            <div class="custom-select-option" data-value="مشهد">مشهد</div>
+                            <div class="custom-select-option" data-value="اصفهان">اصفهان</div>
+                            <div class="custom-select-option" data-value="کرج">کرج</div>
+                            <div class="custom-select-option" data-value="شیراز">شیراز</div>
+                            <div class="custom-select-option" data-value="تبریز">تبریز</div>
+                            <div class="custom-select-option" data-value="قم">قم</div>
+                            <div class="custom-select-option" data-value="اهواز">اهواز</div>
+                            <div class="custom-select-option" data-value="کرمانشاه">کرمانشاه</div>
+                            <div class="custom-select-option" data-value="ارومیه">ارومیه</div>
+                            <div class="custom-select-option" data-value="رشت">رشت</div>
+                            <div class="custom-select-option" data-value="زاهدان">زاهدان</div>
+                            <div class="custom-select-option" data-value="همدان">همدان</div>
+                            <div class="custom-select-option" data-value="کرمان">کرمان</div>
+                            <div class="custom-select-option" data-value="یزد">یزد</div>
+                            <div class="custom-select-option" data-value="اردبیل">اردبیل</div>
+                            <div class="custom-select-option" data-value="بندرعباس">بندرعباس</div>
+                            <div class="custom-select-option" data-value="اراک">اراک</div>
+                            <div class="custom-select-option" data-value="اسلامشهر">اسلامشهر</div>
+                            <div class="custom-select-option" data-value="زنجان">زنجان</div>
+                            <div class="custom-select-option" data-value="سنندج">سنندج</div>
+                            <div class="custom-select-option" data-value="قزوین">قزوین</div>
+                            <div class="custom-select-option" data-value="خرم‌آباد">خرم‌آباد</div>
+                            <div class="custom-select-option" data-value="گرگان">گرگان</div>
+                            <div class="custom-select-option" data-value="ساری">ساری</div>
+                            <div class="custom-select-option" data-value="بجنورد">بجنورد</div>
+                            <div class="custom-select-option" data-value="بوشهر">بوشهر</div>
+                            <div class="custom-select-option" data-value="بیرجند">بیرجند</div>
+                            <div class="custom-select-option" data-value="ایلام">ایلام</div>
+                            <div class="custom-select-option" data-value="شهرکرد">شهرکرد</div>
+                            <div class="custom-select-option" data-value="یاسوج">یاسوج</div>
+                        </div>
+                        <input type="hidden" id="BornCity" name="BornCity" required>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label for="Address">آدرس</label>
+                    <input type="text" id="Address" name="Address" class="custom-input" required maxlength="100">
+                </div>
+                <div class="input-group">
+                    <label for="PostalCode">کد پستی</label>
+                    <input type="text" id="PostalCode" name="PostalCode" class="custom-input" required pattern="\d{10}">
+                </div>
+                <div class="input-group">
+                    <label for="HPhone">تلفن ثابت</label>
+                    <input type="text" id="HPhone" name="HPhone" class="custom-input" required pattern="0\d{2,3}\d{8}">
+                </div>
+                <div class="input-group">
+                    <label>دانشکده</label>
+                    <div class="custom-select-wrapper">
+                        <div class="custom-select" id="Department_select">انتخاب کنید</div>
+                        <div class="custom-select-options" id="Department_options">
+                            <div class="custom-select-option" data-value="فنی مهندسی">فنی مهندسی</div>
+                            <div class="custom-select-option" data-value="علوم پایه">علوم پایه</div>
+                            <div class="custom-select-option" data-value="اقتصاد">اقتصاد</div>
+                        </div>
+                        <input type="hidden" id="Department" name="Department" required>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>رشته</label>
+                    <div class="custom-select-wrapper">
+                        <div class="custom-select" id="Major_select">ابتدا دانشکده را انتخاب کنید</div>
+                        <div class="custom-select-options" id="Major_options"></div>
+                        <input type="hidden" id="Major" name="Major" required>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>وضعیت تأهل</label>
+                    <div class="custom-select-wrapper">
+                        <div class="custom-select" id="Married_select">انتخاب کنید</div>
+                        <div class="custom-select-options" id="Married_options">
+                            <div class="custom-select-option" data-value="مجرد">مجرد</div>
+                            <div class="custom-select-option" data-value="متاهل">متاهل</div>
+                        </div>
+                        <input type="hidden" id="Married" name="Married" required>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label for="national_id">کدملی</label>
+                    <input type="text" id="national_id" name="national_id" class="custom-input" required pattern="\d{10}">
+                </div>
+                <div class="input-group">
+                    <label>تاریخ تولد (شمسی)</label>
+                    <div class="date-container">
+                        <div class="custom-select-wrapper">
+                            <div class="custom-select" id="birth_year_select">سال</div>
+                            <div class="custom-select-options" id="birth_year_options"></div>
+                            <input type="hidden" id="birth_year" required>
+                        </div>
+                        <div class="custom-select-wrapper">
+                            <div class="custom-select" id="birth_month_select">ماه</div>
+                            <div class="custom-select-options" id="birth_month_options">
+                                <div class="custom-select-option" data-value="01">فروردین</div>
+                                <div class="custom-select-option" data-value="02">اردیبهشت</div>
+                                <div class="custom-select-option" data-value="03">خرداد</div>
+                                <div class="custom-select-option" data-value="04">تیر</div>
+                                <div class="custom-select-option" data-value="05">مرداد</div>
+                                <div class="custom-select-option" data-value="06">شهریور</div>
+                                <div class="custom-select-option" data-value="07">مهر</div>
+                                <div class="custom-select-option" data-value="08">آبان</div>
+                                <div class="custom-select-option" data-value="09">آذر</div>
+                                <div class="custom-select-option" data-value="10">دی</div>
+                                <div class="custom-select-option" data-value="11">بهمن</div>
+                                <div class="custom-select-option" data-value="12">اسفند</div>
+                            </div>
+                            <input type="hidden" id="birth_month" required>
+                        </div>
+                        <div class="custom-select-wrapper">
+                            <div class="custom-select" id="birth_day_select">روز</div>
+                            <div class="custom-select-options" id="birth_day_options"></div>
+                            <input type="hidden" id="birth_day" required>
+                        </div>
+                    </div>
+                    <input type="hidden" id="birth_date" name="birth_date" required>
+                    <p class="error-message" id="birth_date_error">لطفاً سال، ماه و روز را انتخاب کنید.</p>
+                </div>
+                <div class="input-group">
+                    <label for="STID">شماره دانشجویی</label>
+                    <input type="text" id="STID" name="STID" class="custom-input" required pattern="\d{11}">
+                </div>
+                <div class="col-span-2 flex justify-center mt-4">
+                    <button type="submit" class="submit-btn">ثبت</button>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <p>ساخته شده با ❤️ توسط <span class="font-bold">حسین محمدی کیا</span></p>
+    </footer>
+
+    <script>
+                function showToast(message, type = 'success', duration = 5000) {
+            const toastClass = `custom-toast toast-${type}`;
+            const closeBtn = document.createElement('span');
+            closeBtn.className = 'toast-close';
+            closeBtn.innerHTML = '&times;';
+            closeBtn.onclick = (e) => {
+                e.stopPropagation();
+                toast.hideToast();
+            };
+            
+            const toast = Toastify({
+                text: message,
+                duration: duration,
+                close: false,
+                gravity: "top",
+                position: "right",
+                stopOnFocus: true,
+                className: toastClass,
+                onClick: function() {
+                    toast.hideToast();
+                },
+                avatar: type === 'success' ? 
+                    'https://img.icons8.com/fluency/48/000000/checked.png' : 
+                    'https://img.icons8.com/color/48/000000/error--v1.png',
+                escapeMarkup: false
+            });
+            
+            // اضافه کردن دکمه بستن
+            toast.showToast();
+            const toastElement = document.querySelector('.toastify.on');
+            if (toastElement) {
+                toastElement.insertBefore(closeBtn, toastElement.firstChild);
+            }
+            
+            return toast;
+        }
+        document.addEventListener("DOMContentLoaded", function () {
+            // Custom Select Functionality
+            function initializeCustomSelect(selectId, optionsId, hiddenInputId, defaultText) {
+                const select = document.getElementById(selectId);
+                const optionsContainer = document.getElementById(optionsId);
+                const hiddenInput = document.getElementById(hiddenInputId);
+                let isOpen = false;
+
+                select.addEventListener("click", function (e) {
+                    e.stopPropagation();
+                    isOpen = !isOpen;
+                    optionsContainer.style.display = isOpen ? "block" : "none";
+                    
+                    // Close other open selects
+                    document.querySelectorAll('.custom-select-options').forEach(opt => {
+                        if (opt.id !== optionsId) {
+                            opt.style.display = 'none';
+                        }
+                    });
+                });
+
+                // Remove existing event listeners
+                const options = optionsContainer.querySelectorAll(".custom-select-option");
+                options.forEach(option => {
+                    option.replaceWith(option.cloneNode(true));
+                });
+
+                optionsContainer.querySelectorAll(".custom-select-option").forEach(option => {
+                    option.addEventListener("click", function (e) {
+                        e.stopPropagation();
+                        const value = this.getAttribute("data-value");
+                        select.textContent = this.textContent;
+                        hiddenInput.value = value;
+                        optionsContainer.style.display = "none";
+                        isOpen = false;
+                        
+                        // Validate the field
+                        validateField(hiddenInput);
+                        
+                        if (hiddenInputId === "Department") {
+                            updateMajors();
+                        }
+                        if (hiddenInputId === "birth_year" || hiddenInputId === "birth_month") {
+                            updateDays();
+                        }
+                        updateBirthDate();
+                    });
+                });
+
+                document.addEventListener("click", function (e) {
+                    if (!select.contains(e.target) && !optionsContainer.contains(e.target)) {
+                        optionsContainer.style.display = "none";
+                        isOpen = false;
+                    }
+                });
+            }
+
+            // Field validation function
+            function validateField(inputElement) {
+                const fieldName = inputElement.name || inputElement.id;
+                const errorElement = document.getElementById(`${fieldName}_error`);
+                if (!errorElement) return true;
+                
+                let isValid = true;
+                let errorMessage = '';
+                
+                // Check if required field is empty
+                if (inputElement.required && !inputElement.value) {
+                    isValid = false;
+                    errorMessage = 'این فیلد اجباری است';
+                }
+                
+                // Check pattern if exists
+                if (isValid && inputElement.pattern) {
+                    const regex = new RegExp(inputElement.pattern);
+                    if (!regex.test(inputElement.value)) {
+                        isValid = false;
+                        errorMessage = 'فرمت وارد شده صحیح نیست';
+                    }
+                }
+                
+                // Special validations
+                if (isValid && fieldName === 'STID' && inputElement.value.length === 11) {
+                    if (inputElement.value.substring(3, 9) !== '114150') {
+                        isValid = false;
+                        errorMessage = 'ارقام 4 تا 9 باید 114150 باشد';
+                    }
+                }
+                
+                if (isValid && fieldName === 'national_id' && inputElement.value.length !== 10) {
+                    isValid = false;
+                    errorMessage = 'کد ملی باید 10 رقمی باشد';
+                }
+                
+                // Show/hide error message
+                if (errorElement) {
+                    errorElement.textContent = errorMessage;
+                    errorElement.style.display = isValid ? 'none' : 'block';
+                }
+                
+                return isValid;
+            }
+
+            // Initialize all custom selects
+            function initializeAllSelects() {
+                initializeCustomSelect("ids_letter_select", "ids_letter_options", "ids_letter", "حرف");
+                initializeCustomSelect("BornCity_select", "BornCity_options", "BornCity", "انتخاب کنید");
+                initializeCustomSelect("Department_select", "Department_options", "Department", "انتخاب کنید");
+                initializeCustomSelect("Major_select", "Major_options", "Major", "انتخاب کنید");
+                initializeCustomSelect("Married_select", "Married_options", "Married", "انتخاب کنید");
+                initializeCustomSelect("birth_year_select", "birth_year_options", "birth_year", "سال");
+                initializeCustomSelect("birth_month_select", "birth_month_options", "birth_month", "ماه");
+                initializeCustomSelect("birth_day_select", "birth_day_options", "birth_day", "روز");
+            }
+
+            // Initialize on load
+            initializeAllSelects();
+
+            // Populate years
+            const yearOptions = document.getElementById("birth_year_options");
+            yearOptions.innerHTML = '';
+            for (let year = 1300; year <= 1400; year++) {
+                const div = document.createElement("div");
+                div.className = "custom-select-option";
+                div.setAttribute("data-value", year);
+                div.textContent = year;
+                yearOptions.appendChild(div);
+            }
+            initializeCustomSelect("birth_year_select", "birth_year_options", "birth_year", "سال");
+
+            // Department and Major logic
+            const majorOptions = {
+                "فنی مهندسی": [
+                    "مهندسی کامپیوتر", "مهندسی برق", "مهندسی مکانیک", "مهندسی عمران",
+                    "مهندسی صنایع", "مهندسی شیمی", "مهندسی مواد", "مهندسی هوافضا",
+                    "مهندسی نفت", "مهندسی معماری"
+                ],
+                "علوم پایه": [
+                    "ریاضی", "فیزیک", "شیمی", "زیست‌شناسی", "زمین‌شناسی",
+                    "آمار", "علوم کامپیوتر", "بیوشیمی", "میکروبیولوژی", "ژنتیک"
+                ],
+                "اقتصاد": [
+                    "اقتصاد", "مدیریت بازرگانی", "حسابداری", "مدیریت مالی",
+                    "مدیریت صنعتی", "اقتصاد کشاورزی", "اقتصاد بین‌الملل",
+                    "بانکداری", "بیمه", "مدیریت دولتی"
+                ]
+            };
+
+            function updateMajors() {
+                const department = document.getElementById("Department").value;
+                const majorSelect = document.getElementById("Major_select");
+                const majorOptionsContainer = document.getElementById("Major_options");
+                majorOptionsContainer.innerHTML = "";
+                majorSelect.textContent = "انتخاب کنید";
+                document.getElementById("Major").value = "";
+
+                if (department && majorOptions[department]) {
+                    majorOptions[department].forEach(major => {
+                        const div = document.createElement("div");
+                        div.className = "custom-select-option";
+                        div.setAttribute("data-value", major);
+                        div.textContent = major;
+                        majorOptionsContainer.appendChild(div);
+                    });
+                } else {
+                    const div = document.createElement("div");
+                    div.className = "custom-select-option";
+                    div.setAttribute("data-value", "");
+                    div.textContent = "ابتدا دانشکده را انتخاب کنید";
+                    majorOptionsContainer.appendChild(div);
+                }
+
+                initializeCustomSelect("Major_select", "Major_options", "Major", "انتخاب کنید");
+            }
+
+            // Date logic
+            const birthDateInput = document.getElementById("birth_date");
+            const birthDateError = document.getElementById("birth_date_error");
+
+            function isPersianLeapYear(year) {
+                const cycle = year % 33;
+                return [1, 5, 9, 13, 17, 21, 26, 30].includes(cycle);
+            }
+
+            function updateDays() {
+                const year = document.getElementById("birth_year").value;
+                const month = document.getElementById("birth_month").value;
+                const dayOptions = document.getElementById("birth_day_options");
+                dayOptions.innerHTML = "";
+
+                if (!year || !month) return;
+
+                let maxDays;
+                if (month <= "06") {
+                    maxDays = 31;
+                } else if (month <= "11") {
+                    maxDays = 30;
+                } else if (month === "12") {
+                    maxDays = isPersianLeapYear(parseInt(year)) ? 30 : 29;
+                }
+
+                for (let day = 1; day <= maxDays; day++) {
+                    const div = document.createElement("div");
+                    div.className = "custom-select-option";
+                    div.setAttribute("data-value", day.toString().padStart(2, "0"));
+                    div.textContent = day;
+                    dayOptions.appendChild(div);
+                }
+
+                initializeCustomSelect("birth_day_select", "birth_day_options", "birth_day", "روز");
+            }
+
+            function updateBirthDate() {
+                const year = document.getElementById("birth_year").value;
+                const month = document.getElementById("birth_month").value;
+                const day = document.getElementById("birth_day").value;
+                if (year && month && day) {
+                    birthDateInput.value = `${year}/${month}/${day}`;
+                    birthDateError.style.display = "none";
+                } else {
+                    birthDateInput.value = "";
+                }
+            }
+
+            // Add input validation for all fields
+            document.querySelectorAll('input, select').forEach(input => {
+                input.addEventListener('blur', function() {
+                    validateField(this);
+                });
+                
+                // For select elements, validate when value changes
+                if (input.tagName === 'SELECT' || input.classList.contains('custom-select')) {
+                    input.addEventListener('change', function() {
+                        const hiddenInput = document.getElementById(this.id.replace('_select', ''));
+                        if (hiddenInput) validateField(hiddenInput);
+                    });
+                }
+            });
+
+            // Form Submission
+            const form = document.getElementById("student-form");
+            form.addEventListener("submit", async function (event) {
+                event.preventDefault();
+                
+                // Validate all fields before submission
+                let isValid = true;
+                document.querySelectorAll('input[required], select[required]').forEach(input => {
+                    if (!validateField(input)) {
+                        isValid = false;
+                    }
+                });
+                
+                // Special validation for birth date
+                const birthDate = document.getElementById("birth_date").value;
+                if (!birthDate) {
+                    birthDateError.style.display = "block";
+                    isValid = false;
+                }
+                
+                if (!isValid) {
+                    showToast("لطفاً تمام فیلدهای ضروری را به درستی پر کنید.", "error");
+                    return;
+                }
+
+                // Collect form data
+                const formData = {
+                    STID: document.getElementById("STID").value,
+                    student_fname: document.getElementById("student_fname").value,
+                    student_lname: document.getElementById("student_lname").value,
+                    father: document.getElementById("father").value,
+                    ids_number: document.getElementById("ids_number").value,
+                    ids_letter: document.getElementById("ids_letter").value,
+                    ids_code: document.getElementById("ids_code").value,
+                    BornCity: document.getElementById("BornCity").value,
+                    Address: document.getElementById("Address").value,
+                    PostalCode: document.getElementById("PostalCode").value,
+                    HPhone: document.getElementById("HPhone").value,
+                    Department: document.getElementById("Department").value,
+                    Major: document.getElementById("Major").value,
+                    Married: document.getElementById("Married").value,
+                    national_id: document.getElementById("national_id").value,
+                    birth_date: birthDate
+                };
+
+                try {
+                    const response = await fetch("http://localhost:8000/students", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify(formData)
+                    });
+
+                    const data = await response.json();
+                    
+                    if (response.ok) {
+                        showToast("دانشجو با موفقیت ثبت شد!", "success");
+                        form.reset();
+                        // Reset select displays
+                        document.getElementById("ids_letter_select").textContent = "حرف";
+                        document.getElementById("BornCity_select").textContent = "انتخاب کنید";
+                        document.getElementById("Department_select").textContent = "انتخاب کنید";
+                        document.getElementById("Major_select").textContent = "انتخاب کنید";
+                        document.getElementById("Married_select").textContent = "انتخاب کنید";
+                        document.getElementById("birth_year_select").textContent = "سال";
+                        document.getElementById("birth_month_select").textContent = "ماه";
+                        document.getElementById("birth_day_select").textContent = "روز";
+                        document.getElementById("birth_date").value = "";
+                        updateMajors(); // Reset major options
+                        
+                        // Clear all error messages
+                        document.querySelectorAll('.error-message').forEach(el => {
+                            el.style.display = 'none';
+                        });
+                    } else {
+                        let errorMessage = "ثبت دانشجو ناموفق بود.";
+                        if (data.detail) {
+                            if (typeof data.detail === 'string') {
+                                errorMessage = data.detail;
+                            } else if (Array.isArray(data.detail)) {
+                                // Handle validation errors from FastAPI
+                                errorMessage = data.detail.map(err => err.msg).join(', ');
+                            }
+                        }
+                        
+                        Toastify({
+                            text: `خطا: ${errorMessage}`,
+                            duration: 4000,
+                            close: true,
+                            gravity: "top",
+                            position: "right",
+                            backgroundColor: "#dc2626",
+                            stopOnFocus: true
+                        }).showToast();
+                    }
+                } catch (error) {
+                    Toastify({
+                        text: "خطا در اتصال به سرور: " + error.message,
+                        duration: 4000,
+                        close: true,
+                        gravity: "top",
+                        position: "right",
+                        backgroundColor: "#dc2626",
+                        stopOnFocus: true
+                    }).showToast();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

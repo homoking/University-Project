@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ثبت درس - سامانه مدیریت دانشگاه</title>
+    <link rel="icon" type="image/png" href="https://img.icons8.com/color/48/000000/books.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <style>
+        body { font-family: 'Vazirmatn', sans-serif; }
+        .header { background: linear-gradient(to right, #1e40af, #3b82f6); box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
+        .footer { background: linear-gradient(to right, #1e3a8a, #3b82f6); color: white; text-align: center; padding: 1.5rem; font-size: 1.2rem; font-weight: 500; box-shadow: 0 -4px 6px rgba(0, 0, 0, 0.1); transition: transform 0.3s ease; }
+        .footer:hover { transform: translateY(-2px); }
+        .nav-link { position: relative; transition: color 0.3s ease; }
+        .nav-link::after { content: ''; position: absolute; width: 0; height: 2px; bottom: -2px; right: 0; background-color: white; transition: width 0.3s ease; }
+        .nav-link:hover::after { width: 100%; }
+        .form-container { background: white; border-radius: 1rem; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); padding: 2rem; animation: fadeIn 0.5s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .input-group { margin-bottom: 1.5rem; }
+        .input-group label { display: block; font-weight: 500; margin-bottom: 0.5rem; color: #1e40af; }
+        .custom-select-wrapper { position: relative; width: 100%; }
+        .custom-select, .custom-input { width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 0.5rem; background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#1e40af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>') no-repeat left 0.75rem center; padding-left: 2rem; cursor: pointer; background-color: white; }
+        .custom-select:focus, .custom-input:focus { outline: none; border-color: #8B5CF6; box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2); }
+        .custom-select-options { position: absolute; top: 100%; right: 0; width: 100%; max-height: 10rem; overflow-y: auto; border: 1px solid #d1d5db; border-radius: 0.5rem; background: white; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); z-index: 10; display: none; scrollbar-width: thin; scrollbar-color: #8B5CF6 #f1f5f9; }
+        .custom-select-options::-webkit-scrollbar { width: 6px; }
+        .custom-select-options::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 3px; }
+        .custom-select-options::-webkit-scrollbar-thumb { background: #8B5CF6; border-radius: 3px; }
+        .custom-select-option { padding: 0.5rem 0.75rem; cursor: pointer; }
+        .custom-select-option:hover { background-color: #f1f5f9; }
+        .submit-btn { background: linear-gradient(to right, #8B5CF6, #9b87f5); color: white; padding: 0.75rem 2rem; border-radius: 0.5rem; font-weight: 500; transition: transform 0.3s ease, box-shadow 0.3s ease; }
+        .submit-btn:hover { transform: scale(1.05); box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3); }
+        .error-message { color: #dc2626; font-size: 0.875rem; margin-top: 0.25rem; display: none; }
+        /* اضافه کردن استایل برای toast */
+        .toast-close {
+            color: white;
+            font-weight: bold;
+            font-size: 16px;
+            margin-right: 10px;
+            cursor: pointer;
+        }
+        
+        .custom-toast {
+            border-radius: 8px;
+            padding: 12px 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            font-family: 'Vazirmatn', sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .toast-success {
+            background: linear-gradient(to right, #10b981, #34d399);
+        }
+        
+        .toast-error {
+            background: linear-gradient(to right, #ef4444, #f87171);
+        }
+        
+        .toast-warning {
+            background: linear-gradient(to right, #f59e0b, #fbbf24);
+        }
+        
+        /* استایل برای پیغام‌های خطا */
+        .error-message {
+            color: #dc2626;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+            display: none;
+        }
+        @media (max-width: 768px) { .form-container { padding: 1.5rem; } .grid-cols-2 { grid-template-columns: 1fr; } }
+        @media (max-width: 480px) { .form-container { padding: 1rem; } .custom-input, .custom-select { padding: 0.5rem; padding-left: 1.5rem; } .submit-btn { padding: 0.5rem 1.5rem; } }
+    </style>
+</head>
+<body class="bg-gradient-to-b from-gray-50 to-gray-200 min-h-screen flex flex-col">
+    <header class="header text-white">
+        <nav class="container mx-auto px-4 py-4">
+            <h1 class="text-2xl font-bold text-white flex items-center">
+            <img src="https://img.icons8.com/color/48/000000/university.png" alt="لوگو" class="w-8 h-8 ml-2">
+            سامانه مدیریت دانشگاه
+            </h1>
+            <br>
+            <ul class="flex space-x-6 space-x-reverse">
+                <li><a href="index.html" class="nav-link hover:text-blue-200">صفحه اصلی</a></li>
+                <li><a href="students.html" class="nav-link hover:text-blue-200">دانشجویان</a></li>
+                <li><a href="teachers.html" class="nav-link hover:text-blue-200">اساتید</a></li>
+                <li><a href="courses.html" class="nav-link hover:text-blue-200">دروس</a></li>
+                <li><a href="reports.html" class="nav-link hover:text-blue-200">گزارشات</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="container mx-auto px-4 py-8 flex-grow">
+        <h2 class="text-2xl font-bold text-center mb-6 text-#1e40af">ثبت درس</h2>
+        <div class="form-container">
+            <form id="course-form" class="grid grid-cols-2 gap-6">
+                <div class="input-group">
+                    <label for="course_name">نام درس</label>
+                    <input type="text" id="course_name" name="course_name" class="custom-input" required pattern="^[\u0600-\u06FF\s]+$">
+                    <p class="error-message" id="course_name_error">نام درس باید فقط شامل حروف فارسی و فاصله باشد.</p>
+                </div>
+                <div class="input-group">
+                    <label for="units">تعداد واحد</label>
+                    <input type="number" id="units" name="units" class="custom-input" required min="1" max="4">
+                    <p class="error-message" id="units_error">تعداد واحد باید بین ۱ تا ۴ باشد.</p>
+                </div>
+                <div class="input-group">
+                    <label>دانشکده</label>
+                    <div class="custom-select-wrapper">
+                        <div class="custom-select" id="department_select">انتخاب کنید</div>
+                        <div class="custom-select-options" id="department_options">
+                            <div class="custom-select-option" data-value="فنی مهندسی">فنی مهندسی</div>
+                            <div class="custom-select-option" data-value="علوم پایه">علوم پایه</div>
+                            <div class="custom-select-option" data-value="اقتصاد">اقتصاد</div>
+                        </div>
+                        <input type="hidden" id="department" name="department" required>
+                        <p class="error-message" id="department_error">لطفاً دانشکده را انتخاب کنید.</p>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>استاد</label>
+                    <div class="custom-select-wrapper">
+                        <div class="custom-select" id="teacher_select">انتخاب کنید</div>
+                        <div class="custom-select-options" id="teacher_options"></div>
+                        <input type="hidden" id="teacher_id" name="teacher_id" required>
+                        <p class="error-message" id="teacher_error">لطفاً استاد را انتخاب کنید.</p>
+                    </div>
+                </div>
+                <div class="col-span-2 flex justify-center mt-4">
+                    <button type="submit" class="submit-btn">ثبت</button>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <p>ساخته شده با ❤️ توسط <span class="font-bold">حسین محمدی کیا</span></p>
+    </footer>
+
+    <script>
+        // تابع نمایش toast با تنظیمات پیشرفته
+        function showToast(message, type = 'success', duration = 5000) {
+            const toastClass = `custom-toast toast-${type}`;
+            const closeBtn = document.createElement('span');
+            closeBtn.className = 'toast-close';
+            closeBtn.innerHTML = '&times;';
+            closeBtn.onclick = (e) => {
+                e.stopPropagation();
+                toast.hideToast();
+            };
+            
+            const toast = Toastify({
+                text: message,
+                duration: duration,
+                close: false,
+                gravity: "top",
+                position: "right",
+                stopOnFocus: true,
+                className: toastClass,
+                onClick: function() {
+                    toast.hideToast();
+                },
+                avatar: type === 'success' ? 
+                    'https://img.icons8.com/fluency/48/000000/checked.png' : 
+                    'https://img.icons8.com/color/48/000000/error--v1.png',
+                escapeMarkup: false
+            });
+            
+            toast.showToast();
+            const toastElement = document.querySelector('.toastify.on');
+            if (toastElement) {
+                toastElement.insertBefore(closeBtn, toastElement.firstChild);
+            }
+            
+            return toast;
+        }
+
+        document.addEventListener("DOMContentLoaded", async function () {
+            // تابع اعتبارسنجی فیلدها
+            function validateField(inputElement) {
+                const fieldName = inputElement.name || inputElement.id;
+                const errorElement = document.getElementById(`${fieldName}_error`);
+                if (!errorElement) return true;
+                
+                let isValid = true;
+                let errorMessage = '';
+                
+                // بررسی فیلدهای اجباری
+                if (inputElement.required && !inputElement.value) {
+                    isValid = false;
+                    errorMessage = 'این فیلد اجباری است';
+                }
+                
+                // بررسی الگو اگر وجود دارد
+                if (isValid && inputElement.pattern) {
+                    const regex = new RegExp(inputElement.pattern);
+                    if (!regex.test(inputElement.value)) {
+                        isValid = false;
+                        errorMessage = 'فرمت وارد شده صحیح نیست';
+                    }
+                }
+                
+                // اعتبارسنجی‌های خاص
+                if (isValid && fieldName === 'units') {
+                    const units = parseInt(inputElement.value);
+                    if (units < 1 || units > 4) {
+                        isValid = false;
+                        errorMessage = 'تعداد واحد باید بین ۱ تا ۴ باشد';
+                    }
+                }
+                
+                // نمایش پیغام خطا
+                if (errorElement) {
+                    errorElement.textContent = errorMessage;
+                    errorElement.style.display = isValid ? 'none' : 'block';
+                }
+                
+                return isValid;
+            }
+
+            // تابع مقداردهی اولیه selectهای سفارشی
+            function initializeCustomSelect(selectId, optionsId, hiddenInputId, defaultText) {
+                const select = document.getElementById(selectId);
+                const optionsContainer = document.getElementById(optionsId);
+                const hiddenInput = document.getElementById(hiddenInputId);
+                let isOpen = false;
+
+                select.addEventListener("click", function (e) {
+                    e.stopPropagation();
+                    isOpen = !isOpen;
+                    optionsContainer.style.display = isOpen ? "block" : "none";
+                    
+                    // بستن سایر selectهای باز
+                    document.querySelectorAll('.custom-select-options').forEach(opt => {
+                        if (opt.id !== optionsId) {
+                            opt.style.display = 'none';
+                        }
+                    });
+                });
+
+                // حذف event listenerهای قبلی و اضافه کردن جدید
+                optionsContainer.querySelectorAll(".custom-select-option").forEach(option => {
+                    option.replaceWith(option.cloneNode(true));
+                });
+
+                optionsContainer.querySelectorAll(".custom-select-option").forEach(option => {
+                    option.addEventListener("click", function (e) {
+                        e.stopPropagation();
+                        const value = this.getAttribute("data-value");
+                        select.textContent = this.textContent;
+                        hiddenInput.value = value;
+                        optionsContainer.style.display = "none";
+                        isOpen = false;
+                        
+                        // اعتبارسنجی فیلد
+                        validateField(hiddenInput);
+                    });
+                });
+
+                document.addEventListener("click", function (e) {
+                    if (!select.contains(e.target) && !optionsContainer.contains(e.target)) {
+                        optionsContainer.style.display = "none";
+                        isOpen = false;
+                    }
+                });
+            }
+
+            // تابع بارگذاری اساتید از سرور
+            async function loadTeachers() {
+                const teacherOptions = document.getElementById("teacher_options");
+                teacherOptions.innerHTML = "";
+                try {
+                    const response = await fetch("http://localhost:8000/teachers", {
+                        method: "GET",
+                        headers: {
+                            "Content-Type": "application/json"
+                        }
+                    });
+
+                    if (response.ok) {
+                        const teachers = await response.json();
+                        if (teachers.items && teachers.items.length === 0) {
+                            const div = document.createElement("div");
+                            div.className = "custom-select-option";
+                            div.setAttribute("data-value", "");
+                            div.textContent = "استادی یافت نشد";
+                            teacherOptions.appendChild(div);
+                        } else {
+                            const teachersList = teachers.items || teachers;
+                            teachersList.forEach(teacher => {
+                                const div = document.createElement("div");
+                                div.className = "custom-select-option";
+                                div.setAttribute("data-value", teacher.teacher_id);
+                                div.textContent = `${teacher.teacher_fname} ${teacher.teacher_lname}`;
+                                teacherOptions.appendChild(div);
+                            });
+                        }
+                        initializeCustomSelect("teacher_select", "teacher_options", "teacher_id", "انتخاب کنید");
+                    } else {
+                        const error = await response.json();
+                        showToast(`خطا در بارگذاری اساتید: ${error.detail || "ناموفق بود."}`, "error");
+                    }
+                } catch (error) {
+                    showToast("خطا در اتصال به سرور برای بارگذاری اساتید: " + error.message, "error");
+                }
+            }
+
+            // مقداردهی اولیه selectها
+            initializeCustomSelect("department_select", "department_options", "department", "انتخاب کنید");
+            initializeCustomSelect("teacher_select", "teacher_options", "teacher_id", "انتخاب کنید");
+
+            // بارگذاری اساتید هنگام لود صفحه
+            await loadTeachers();
+
+            // اضافه کردن اعتبارسنجی برای تمام فیلدها
+            document.querySelectorAll('input, select').forEach(input => {
+                input.addEventListener('blur', function() {
+                    validateField(this);
+                });
+                
+                if (input.tagName === 'SELECT' || input.classList.contains('custom-select')) {
+                    input.addEventListener('change', function() {
+                        const hiddenInput = document.getElementById(this.id.replace('_select', ''));
+                        if (hiddenInput) validateField(hiddenInput);
+                    });
+                }
+            });
+
+            // مدیریت ارسال فرم
+            const form = document.getElementById("course-form");
+            form.addEventListener("submit", async function (event) {
+                event.preventDefault();
+                
+                // اعتبارسنجی تمام فیلدها قبل از ارسال
+                let isValid = true;
+                document.querySelectorAll('input[required], select[required]').forEach(input => {
+                    if (!validateField(input)) {
+                        isValid = false;
+                    }
+                });
+                
+                if (!isValid) {
+                    showToast("لطفاً تمام فیلدهای ضروری را به درستی پر کنید.", "error");
+                    return;
+                }
+
+                // جمع‌آوری داده‌های فرم
+                const formData = {
+                    course_name: document.getElementById("course_name").value,
+                    units: parseInt(document.getElementById("units").value),
+                    department: document.getElementById("department").value,
+                    teacher_id: document.getElementById("teacher_id").value
+                };
+
+                try {
+                    const response = await fetch("http://localhost:8000/courses", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify(formData)
+                    });
+
+                    const data = await response.json();
+                    
+                    if (response.ok) {
+                        showToast(`درس با موفقیت ثبت شد!`, "success");
+                        
+                        // ریست کردن فرم
+                        form.reset();
+                        document.getElementById("department_select").textContent = "انتخاب کنید";
+                        document.getElementById("teacher_select").textContent = "انتخاب کنید";
+                        document.getElementById("department").value = "";
+                        document.getElementById("teacher_id").value = "";
+                        
+                        // پاک کردن پیغام‌های خطا
+                        document.querySelectorAll('.error-message').forEach(el => {
+                            el.style.display = 'none';
+                        });
+                        
+                        // بارگذاری مجدد لیست اساتید
+                        await loadTeachers();
+                    } else {
+                        let errorMessage = "ثبت درس ناموفق بود.";
+                        if (data.detail) {
+                            if (typeof data.detail === 'string') {
+                                errorMessage = data.detail;
+                            } else if (Array.isArray(data.detail)) {
+                                errorMessage = data.detail.map(err => err.msg).join('<br>');
+                            }
+                        }
+                        
+                        showToast(errorMessage, "error", 7000);
+                    }
+                } catch (error) {
+                    showToast("خطا در اتصال به سرور: " + error.message, "error", 7000);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
