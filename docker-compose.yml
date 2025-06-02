@@ -1,3 +1,5 @@
+version: '3.8'  # اضافه کردن نسخه docker-compose
+
 services:
   web:
     build: .
@@ -8,16 +10,23 @@ services:
       - ./university.db:/app/university.db
     environment:
       - PYTHONUNBUFFERED=1
+    restart: unless-stopped  # اضافه کردن سیاست ری‌استارت
+    networks:
+      - app-network  # اتصال به شبکه
+
   nginx:
     build:
       context: .
       dockerfile: Dockerfile.nginx
     ports:
       - "80:80"
-      - "443:443"
+      # - "443:443"  # در صورت عدم نیاز به HTTPS غیرفعال شده
     depends_on:
       - web
+    restart: unless-stopped  # اضافه کردن سیاست ری‌استارت
     networks:
       - app-network
-    volumes:
-      -/etc/letsencrypt:/etc/letsencrypt:ro
+
+networks:
+  app-network:  # تعریف شبکه
+    driver: bridge
