@@ -57,7 +57,7 @@ pip install fastapi uvicorn sqlalchemy pydantic
 ### 2. اجرای سرور FastAPI
 
 ```bash
-uvicorn main:app --reload
+uvicorn main:app --host 0.0.0.0 --port 8080 --reload
 ```
 
 ### 3. اجرای بخش رابط کاربری

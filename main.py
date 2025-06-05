@@ -213,7 +213,7 @@ class StudentCreate(BaseModel):
 
 class StudentResponse(StudentCreate):
     class Config:
-        orm_mode = True
+        from_attributes = True
         validate_assignment = True
         extra = "forbid"
         strict = True
@@ -314,7 +314,7 @@ class TeacherResponse(TeacherCreate):
     teacher_id: str
 
     class Config:
-        orm_mode = True
+        from_attributes = True
         validate_assignment = True
         extra = "forbid"
         strict = True
@@ -361,7 +361,7 @@ class CourseResponse(CourseCreate):
     id: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
         validate_assignment = True
         extra = "forbid"
         strict = True
@@ -373,7 +373,7 @@ class PaginatedResponse(BaseModel, Generic[T]):
     total: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
         validate_assignment = True
         extra = "forbid"
         strict = True
