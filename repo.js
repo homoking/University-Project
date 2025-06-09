@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:8000';
+const API_URL = 'http://localhost:8080';
 let majors = {};
 
 async function loadMajors() {
