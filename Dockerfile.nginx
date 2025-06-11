@@ -10,4 +10,4 @@ COPY reports.html /usr/share/nginx/html/
 COPY repo.js /usr/share/nginx/html/
 
 # تنظیمات Nginx
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY nginx.conf /etc/nginx/nginx.conf
